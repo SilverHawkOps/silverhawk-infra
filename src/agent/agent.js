@@ -2,33 +2,20 @@
 
 import si from "systeminformation";
 import axios from "axios";
-import os from "os";
 import dotenv from "dotenv";
 import chalk from "chalk";
 import fs from "fs";
-// import { safeAppendLog } from "./utils/logger";
+import { BACKEND_URL, HOSTNAME, INTERVAL, LOG_FILE } from "../config/constant.js";
+import { getArgValue } from "../utils/argv.js";
 
-dotenv.config(); // for endpoint URL, API key, interval, etc.
+dotenv.config();
 
-function getArgValue(flag) {
-  const index = process.argv.indexOf(flag);
-  if (index !== -1 && process.argv[index + 1]) return process.argv[index + 1];
-  return null;
-}
-
-function getDateString(date = new Date()) {
-  return date.toISOString().split("T")[0]; // YYYY-MM-DD
-}
 const API_KEY = getArgValue("--api-key");
+
 if (!API_KEY) {
   console.error(chalk.red("Error: --api-key is required"));
   process.exit(1);
 }
-
-const BACKEND_URL = "http://localhost:4000/metrics";
-const INTERVAL = 5000; // 30 seconds
-const LOG_FILE = `silverhawk-infra-${getDateString()}.log` || null;
-const HOSTNAME = os.hostname();
 
 async function collectMetrics() {
   const cpu = await si.cpu();
@@ -84,11 +71,8 @@ async function sendMetrics(metrics) {
 async function runAgent() {
   while (true) {
     const metrics = await collectMetrics();
-    if (LOG_FILE) {
-      fs.appendFileSync(LOG_FILE, JSON.stringify(metrics) + "\n");
-
-      //  safeAppendLog(JSON.stringify(metrics) + "\n"  );
-    }
+    console.log(metrics)
+    fs.appendFileSync(LOG_FILE, JSON.stringify(metrics) + "\n");
     // await sendMetrics(metrics);
     await new Promise((res) => setTimeout(res, INTERVAL));
   }

@@ -120,6 +120,10 @@ git push origin your-branch-name
 
 Open a Pull Request.
 
+## Future Scopes - 
+
+1. Get Running processes on user's server (check ps-list package);
+
 ## License
 
 MIT License © 2025 SilverHawk Team
