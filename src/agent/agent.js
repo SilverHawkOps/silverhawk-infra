@@ -5,7 +5,12 @@ import axios from "axios";
 import dotenv from "dotenv";
 import chalk from "chalk";
 import fs from "fs";
-import { BACKEND_URL, HOSTNAME, INTERVAL, LOG_FILE } from "../config/constant.js";
+import {
+  BACKEND_URL,
+  HOSTNAME,
+  INTERVAL,
+  LOG_FILE,
+} from "../config/constant.js";
 import { getArgValue } from "../utils/argv.js";
 
 dotenv.config();
@@ -59,7 +64,7 @@ async function collectMetrics() {
 
 async function sendMetrics(metrics) {
   try {
-    await axios.post(BACKEND_URL, metrics, {
+    await axios.post(`${BACKEND_URL}/infra/metrics`, metrics, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `ApiKey ${API_KEY}`,
@@ -70,10 +75,13 @@ async function sendMetrics(metrics) {
 
 async function runAgent() {
   while (true) {
-    const metrics = await collectMetrics();
-    console.log(metrics)
-    fs.appendFileSync(LOG_FILE, JSON.stringify(metrics) + "\n");
-    // await sendMetrics(metrics);
+    try {
+      const metrics = await collectMetrics();
+      fs.appendFileSync(LOG_FILE, JSON.stringify(metrics) + "\n");
+      await sendMetrics(metrics);
+    } catch (err) {
+      console.error("Agent error:", err.message);
+    }
     await new Promise((res) => setTimeout(res, INTERVAL));
   }
 }

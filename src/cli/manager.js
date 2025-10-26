@@ -10,8 +10,12 @@ import {
   getDateString,
   BACKEND_URL,
   HOSTNAME,
+  VERSION,
+  CONFIG_PATH,
 } from "../config/constant.js";
 import axios from "axios";
+import { getIPAddresses } from "../utils/getIPAddress.js";
+import { saveConfig } from "../utils/utils.js";
 
 /** Check if process is running */
 export function isProcessRunning(pid) {
@@ -49,11 +53,40 @@ export function startAgent({ apiKey, agentPath }) {
 
   child.unref();
   fs.writeFileSync(PID_FILE, String(child.pid));
+  saveConfig(CONFIG_PATH, apiKey, null);
   console.log("SilverHawk Infra agent started");
 }
 
+async function stopInfraAgent() {
+  try {
+    if (!fs.existsSync(CONFIG_PATH)) {
+      console.error(
+        '❌ No active infra found. Please run "silverhawk-infra start" first.'
+      );
+      return;
+    }
+
+    const { apiKey, infraId } = JSON.parse(
+      fs.readFileSync(CONFIG_PATH, "utf-8")
+    );
+
+    await axios.post(
+      `${BACKEND_URL}/infra/metrics/stop`,
+      {},
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `ApiKey ${apiKey}`,
+        },
+      }
+    );
+  } catch (err) {
+    console.log(err)
+  }
+}
+
 /** Stop agent */
-export function stopAgent() {
+export async function stopAgent() {
   if (!fs.existsSync(PID_FILE)) {
     console.log("SilverHawk Infra agent is not running.");
     return;
@@ -61,6 +94,7 @@ export function stopAgent() {
 
   const pid = Number(fs.readFileSync(PID_FILE, "utf-8"));
   try {
+    await stopInfraAgent();
     process.kill(pid);
     fs.unlinkSync(PID_FILE);
     console.log("SilverHawk Infra agent stopped.");
@@ -72,8 +106,6 @@ export function stopAgent() {
 /** Show logs */
 export function showLogs({ lines = 10, date = getDateString() }) {
   const logFile = getLogFile();
-
-  console.log(logFile)
 
   if (!fs.existsSync(logFile)) {
     console.log(`No log file found for ${date} at ${logFile}`);
@@ -117,26 +149,30 @@ export async function heartbeat({ apiKey }) {
     process.exit(1);
   }
 
-  const serverUrl = BACKEND_URL; // e.g., "https://dashboard.example.com/api/heartbeat"
+  const serverUrl = `${BACKEND_URL}/infra/heartbeat`;
 
   try {
-    // const res = await axios.post(
-    //   `${serverUrl}`,
-    //   {
-    //     hostname: HOSTNAME,
-    //     timestamp: new Date().toISOString(),
-    //   },
-    //   {
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //       Authorization: `ApiKey ${apiKey}`,
-    //     },
-    //   }
-    // );
-
     console.log("Sending heartbeat...");
 
-    console.log("Heartbeat sent successfully ✅");
+    const ip = await getIPAddresses();
+    const payload = {
+      os: os.platform(),
+      hostname: HOSTNAME,
+      ipAddress: ip.publicIP || ip.privateIP,
+      cpuCores: os.cpus().length,
+      memoryGB: Math.floor(os.totalmem() / (1024 * 1024 * 1024)),
+      diskGB: Math.floor(os.freemem() / (1024 * 1024 * 1024)),
+      agentVersion: VERSION,
+      apiKey: apiKey,
+    };
+    const res = await axios.post(`${serverUrl}`, payload, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `ApiKey ${apiKey}`,
+      },
+    });
+
+    console.log("Heartbeat sent successfully ✅", res.data);
   } catch (err) {
     console.error("Failed to send heartbeat:", err.message);
   }
