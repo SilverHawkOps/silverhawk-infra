@@ -17,7 +17,7 @@ function getLogFile(date = new Date()) {
   return path.join(LOG_DIR, `silverhawk-infra-${getDateString(date)}.log`);
 }
 
-const BACKEND_URL = "http://localhost:5000/v1";
+const BACKEND_URL = "https://silverhawk.ritikprojects.tech/v1";
 const INTERVAL = 30000; // 30 seconds
 const HOSTNAME = os.hostname();
 
