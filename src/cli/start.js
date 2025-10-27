@@ -1,14 +1,18 @@
 #!/usr/bin/env node
-
-import path from "path";
 import { Command } from "commander";
 import { createRequire } from "module";
 import { startAgent, stopAgent, showLogs, heartbeat } from "./manager.js";
 
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
 const require = createRequire(import.meta.url);
 const { version } = require("../../package.json");
 const program = new Command();
-const agentPath = path.resolve("./src/agent/agent.js");
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const agentPath = join(__dirname, "..", "agent", "agent.js");
 
 program
   .name("silverhawk-infra")
@@ -17,7 +21,7 @@ program
 
 program
   .command("start")
-  .requiredOption("--api-key <key>", "API key")
+  .requiredOption("--api-key <key>", "API key for agent")
   .description("Start the agent")
   .action((opts) => startAgent({ apiKey: opts.apiKey, agentPath }));
 

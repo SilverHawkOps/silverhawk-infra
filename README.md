@@ -34,38 +34,10 @@ silverhawk-infra --version
 ## CLI Commands
 | Command                          | Description                                   |
 |----------------------------------|-----------------------------------------------|
-| `silverhawk-infra start`          | Start the monitoring agent                    |
-| `silverhawk-infra stop`           | Stop the agent                                |
-| `silverhawk-infra status`         | Show current agent status                     |
-| `silverhawk-infra configure`      | Setup or edit agent configuration            |
-| `silverhawk-infra collect-now`    | Trigger an immediate metric collection       |
-
-
-## Configuration
-
-The CLI uses a configuration file ~/.silverhawk-infra/config.json:
-
-```json
-{
-  "agentName": "silverhawk-infra",
-  "interval": "10s",
-  "serverUrl": "https://dashboard.silverhawk.com",
-  "apiKey": "YOUR_API_KEY",
-  "metrics": {
-    "cpu": true,
-    "memory": true,
-    "disk": true,
-    "network": true,
-    "processes": true
-  }
-}
-```
-
-You can update it via CLI:
-
-```bash
-silverhawk-infra configure
-```
+| `silverhawk-infra heartbeat --api-key YOUR_API_KEY`          | Sends the heartbeat to silverhawk apm dashboard                    |
+| `silverhawk-infra start --api-key YOUR_API_KEY`           | Start the agent                                |
+| `silverhawk-infra stop`         | Stop the agent                     |
+| `silverhawk-infra logs`         | Show agent logs                     |
 
 ## Usage Example
 
@@ -75,6 +47,13 @@ Start monitoring:
 silverhawk-infra start
 ```
 
+Heartbeat monitoring:
+
+```bash
+silverhawk-infra heartbeat --api-key YOUR_API_KEY
+```
+
+Note: Replace YOUR_API_KEY with your actual SilverHawk API key. SilverHawk API key can be found in your SilverHawk dashboard under infrastructure list.
 
 Check status:
 
@@ -88,41 +67,11 @@ Stop monitoring:
 silverhawk-infra stop
 ```
 
-Force a metric collection:
+Show logs:
 
 ```bash
-silverhawk-infra collect-now
+silverhawk-infra logs
 ```
-
-## Contributing
-
-Fork the repository
-
-Clone your fork:
-
-```bash
-git clone https://github.com/your-org/silverhawk-infra.git
-```
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Make changes, commit, and push.
-
-```bash
-git add .
-git commit -m "Your commit message"
-git push origin your-branch-name
-```
-
-Open a Pull Request.
-
-## Future Scopes - 
-
-1. Get Running processes on user's server (check ps-list package);
 
 ## License
 
